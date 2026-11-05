@@ -1,0 +1,12 @@
+{
+    "id": "cvesmicShakeProbe",
+    "name": "CVEsmic Shake Probe",
+    "description": "Throwaway probe: freezes the screen and shakes it like an earthquake",
+    "version": "0.0.1",
+    "author": "Graeme Foster",
+    "type": "daemon",
+    "capabilities": ["daemon"],
+    "component": "./ShakeProbe.qml",
+    "icon": "vibration",
+    "permissions": ["process"]
+}
