@@ -5,6 +5,7 @@ import Quickshell.Wayland
 import qs.Services
 import qs.Modules.Plugins
 import "Feed.js" as Feed
+import "Shake.js" as Shake
 
 PluginComponent {
     id: root
@@ -16,7 +17,6 @@ PluginComponent {
     readonly property bool locked: SessionService.locked || SessionService.lockedHint || IdleService.isShellLocked || IdleService.isSessionLockSecure
     readonly property bool unsafeToShow: locked || NiriService.hasCasts
 
-    readonly property real overscan: 1.05
     readonly property int captureGraceMs: 1000
 
     property string etag: ""
@@ -224,15 +224,19 @@ PluginComponent {
                 captureSource: root.shaking ? overlay.modelData : null
                 live: false
                 visible: root.shaking && hasContent && !finished
-                scale: root.overscan
 
                 onCaptureSourceChanged: {
                     finished = false;
                     quake.stop();
-                    x = 0;
-                    y = 0;
-                    rotation = 0;
+                    place(Shake.rest);
                 }
+                function place(pose) {
+                    x = pose.x;
+                    y = pose.y;
+                    rotation = pose.rotation;
+                    scale = pose.scale;
+                }
+
                 onHasContentChanged: {
                     if (hasContent && root.shaking) {
                         quake.reset();
@@ -245,19 +249,11 @@ PluginComponent {
                     onTriggered: {
                         const strength = root.strength;
                         const t = strength ? elapsedTime * 1000 / strength.durationMs : 1;
+                        frame.place(strength ? Shake.poseAt(strength, t, elapsedTime, frame) : Shake.rest);
                         if (t >= 1) {
                             stop();
                             frame.finished = true;
-                            return;
                         }
-                        // Sharp onset, then a long decay, like a quake's main shock.
-                        const env = Math.min(t / 0.1, 1) * Math.pow(1 - t, 2);
-                        const s = elapsedTime;
-                        const sway = (f, p) => Math.sin(2 * Math.PI * f * s + p);
-                        const jolt = () => Math.random() * 2 - 1;
-                        frame.x = strength.offsetPx * env * (0.6 * sway(2.3, 0) + 0.25 * sway(7.1, 1.3) + 0.15 * jolt());
-                        frame.y = strength.offsetPx * env * (0.6 * sway(1.7, 2.1) + 0.25 * sway(8.3, 0.4) + 0.15 * jolt());
-                        frame.rotation = strength.rotationDeg * env * sway(1.1, 0.7);
                     }
                 }
             }
