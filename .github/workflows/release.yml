@@ -1,0 +1,69 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows: [CI]
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    # A fork's pull request from a branch named main also fires workflow_run,
+    # and this file runs with the repo's secrets, so only a push counts.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ env.SHA }}
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+
+      - name: Decide whether this merge is a release
+        id: plan
+        run: |
+          version=$(nix eval --raw --impure --expr '(builtins.fromJSON (builtins.readFile ./plugin/cvesmic/plugin.json)).version')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if gh release view "v$version" >/dev/null 2>&1; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          elif [ -f "RELEASE-NOTES/$version.md" ]; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          elif git ls-remote --exit-code --tags origin "v$version" >/dev/null 2>&1; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::version $version has no tag, no release and no RELEASE-NOTES/$version.md"
+            exit 1
+          fi
+
+      - name: Build the package
+        if: steps.plan.outputs.release == 'true'
+        env:
+          VERSION: ${{ steps.plan.outputs.version }}
+        run: |
+          nix build .#default
+          tar -C result/share --dereference -czf "cvesmic-$VERSION.tar.gz" cvesmic
+          sha256sum "cvesmic-$VERSION.tar.gz" > "cvesmic-$VERSION.tar.gz.sha256"
+
+      - name: Tag and announce
+        if: steps.plan.outputs.release == 'true'
+        env:
+          VERSION: ${{ steps.plan.outputs.version }}
+        run: |
+          v="v$VERSION"
+          git ls-remote --exit-code --tags origin "$v" >/dev/null 2>&1 || {
+            git tag "$v" "$SHA"
+            git push origin "$v"
+          }
+          gh release create "$v" --verify-tag --title "$v" \
+            --notes-file "RELEASE-NOTES/$VERSION.md" \
+            "cvesmic-$VERSION.tar.gz" \
+            "cvesmic-$VERSION.tar.gz.sha256"
