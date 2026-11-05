@@ -33,7 +33,7 @@ jobs:
         run: |
           version=$(nix eval --raw --impure --expr '(builtins.fromJSON (builtins.readFile ./plugin/cvesmic/plugin.json)).version')
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          if gh release view "v$version" >/dev/null 2>&1; then
+          if [ "$version" = 0.0.0 ] || gh release view "v$version" >/dev/null 2>&1; then
             echo "release=false" >> "$GITHUB_OUTPUT"
           elif [ -f "RELEASE-NOTES/$version.md" ]; then
             echo "release=true" >> "$GITHUB_OUTPUT"
