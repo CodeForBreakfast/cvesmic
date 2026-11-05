@@ -15,3 +15,4 @@ jobs:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
       - run: nix flake check
+      - run: nix shell nixpkgs#nodejs -c node --test
