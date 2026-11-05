@@ -13,7 +13,10 @@ PluginComponent {
     readonly property string defaultFeedUrl: "https://pwn.watch/feed.json"
     readonly property string feedUrl: Feed.usableFeedUrl(pluginData.feedUrl || defaultFeedUrl)
 
-    // A frozen frame can show a secret, so it is never shown to a cast or over a lock.
+    // A frozen frame can show a secret, so it is never shown over a lock. Other
+    // compositors black out of a capture whatever they black out of a cast. niri
+    // can hide a window from casts but not from captures, so while niri lists a
+    // cast the frame is not shown. NiriService lists no casts anywhere else.
     readonly property bool locked: SessionService.locked || SessionService.lockedHint || IdleService.isShellLocked || IdleService.isSessionLockSecure
     readonly property bool unsafeToShow: locked || NiriService.hasCasts
 
@@ -24,7 +27,6 @@ PluginComponent {
     property var request: null
     property string lastResult: "no poll yet"
 
-    property var pendingStrength: null
     property var strength: null
     readonly property bool shaking: strength !== null
 
@@ -98,7 +100,7 @@ PluginComponent {
     }
 
     function shake(severity) {
-        if (shaking || castCheck.running) {
+        if (shaking) {
             report("skipped a " + severity + " shake: already shaking");
             return;
         }
@@ -106,8 +108,10 @@ PluginComponent {
             report("skipped a " + severity + " shake: a cast is listed or the session is locked");
             return;
         }
-        pendingStrength = Feed.strengthFor(severity);
-        castCheck.running = true;
+        strength = Feed.strengthFor(severity);
+        shakeEnd.interval = strength.durationMs + captureGraceMs;
+        shakeEnd.restart();
+        report("shaking for " + strength.durationMs + " ms at " + strength.offsetPx + " px");
     }
 
     function stopShake() {
@@ -151,23 +155,6 @@ PluginComponent {
     Timer {
         id: shakeEnd
         onTriggered: root.stopShake()
-    }
-
-    // niri's own list is checked just before each capture, and anything but an
-    // empty list refuses the shake.
-    Process {
-        id: castCheck
-        command: ["sh", "-c", "[ \"$(niri msg --json casts)\" = '[]' ]"]
-        onExited: exitCode => {
-            if (exitCode !== 0 || root.unsafeToShow) {
-                root.report("skipped a shake: a cast is listed or the session is locked");
-                return;
-            }
-            root.strength = root.pendingStrength;
-            shakeEnd.interval = root.strength.durationMs + root.captureGraceMs;
-            shakeEnd.restart();
-            root.report("shaking for " + root.strength.durationMs + " ms at " + root.strength.offsetPx + " px");
-        }
     }
 
     IpcHandler {

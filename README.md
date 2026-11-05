@@ -6,8 +6,7 @@ CVEsmic is an alert, not a vulnerability source. It follows a single feed, pwn.w
 
 ## What it needs
 
-- A Wayland desktop running [Dux Shell](https://github.com/duxlabs-dev/dux-shell) on Quickshell.
-- The [niri](https://github.com/niri-wm/niri) compositor, because CVEsmic asks niri whether the screen is being cast before it shakes.
+- A Wayland desktop running [Dux Shell](https://github.com/duxlabs-dev/dux-shell) on Quickshell, on a compositor that lets Quickshell capture the screen.
 
 ## Installing
 
@@ -25,7 +24,9 @@ dms ipc call plugins enable cvesmic
 - Severity comes from the item's tags. An item tagged `critical` shakes hardest, then `high`, `medium` and `low`. An item without one of those tags shakes as `low`.
 - The shake freezes a picture of the screen and shakes the picture. Your apps keep running underneath, and clicks pass through to them.
 - The picture stays in memory and is dropped when the shake ends.
-- It never shakes while the session is locked, or while niri lists a screen cast, because the frozen picture could show something private. A lock or a cast that starts during a shake stops it.
+- It never shakes while the session is locked, because the frozen picture could show something private. A lock that starts during a shake stops it.
+- During a screen cast, the frozen picture hides whatever the compositor hides from the cast, such as a password manager you have blocked from screen sharing. Most compositors hide the same windows from every screen capture, so the picture is the same as the cast.
+- niri is the exception. A window rule with `block-out-from "screencast"` hides a window from casts but not from other screen captures, so the frozen picture would show it. On niri, CVEsmic does not shake while niri lists a screen cast, and a cast that starts during a shake stops it.
 
 ## Settings
 
