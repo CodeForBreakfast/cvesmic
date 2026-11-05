@@ -1,5 +1,13 @@
 {
     "id": "cvesmic",
     "name": "CVEsmic",
-    "version": "0.0.0"
+    "description": "Shakes the screen when a new item appears in the pwn.watch feed, harder for a more severe one",
+    "version": "0.0.0",
+    "author": "Graeme Foster",
+    "type": "daemon",
+    "capabilities": ["daemon"],
+    "component": "./CVEsmic.qml",
+    "settings": "./CVEsmicSettings.qml",
+    "icon": "vibration",
+    "permissions": ["settings_read", "settings_write", "process", "network"]
 }
