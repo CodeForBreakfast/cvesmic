@@ -2,7 +2,7 @@
     "id": "cvesmic",
     "name": "CVEsmic",
     "description": "Shakes the screen when a new item appears in the pwn.watch feed, harder for a more severe one",
-    "version": "0.0.0",
+    "version": "0.1.0",
     "author": "Graeme Foster",
     "type": "daemon",
     "capabilities": ["daemon"],
