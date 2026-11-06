@@ -59,6 +59,10 @@ The animation at the top is rendered, not recorded. A script shakes a staged des
 nix shell nixpkgs#nodejs nixpkgs#imagemagick nixpkgs#gifski -c node docs/render-shake.mjs
 ```
 
+## Security
+
+To report a vulnerability in CVEsmic privately, see [SECURITY.md](SECURITY.md).
+
 ## Licence
 
 CVEsmic is released under the [MIT licence](LICENSE).
