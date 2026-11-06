@@ -47,13 +47,21 @@
                 gnomeDir
               ];
             };
-            nativeBuildInputs = [ pkgs.gnome-shell ];
+            nativeBuildInputs = [
+              pkgs.gnome-shell
+              pkgs.jq
+            ];
+            # extensions.gnome.org shows an extension's version-name on its
+            # listing, and reads it only from the zip.
             buildPhase = ''
               pack() {
                 tar --sort=name --mtime=@1 --owner=0 --group=0 --numeric-owner -I 'gzip -n' "$@"
               }
               pack -C plugin -cf cvesmic-quickshell.tar.gz cvesmic
               pack -C plugin/cvesmic/kwin -cf cvesmic-kwin.tar.gz metadata.json contents
+              jq --arg version "$version" '. + {"version-name": $version}' \
+                gnome/cvesmic@codeforbreakfast.co/metadata.json > metadata.json
+              mv metadata.json gnome/cvesmic@codeforbreakfast.co/metadata.json
               gnome-extensions pack gnome/cvesmic@codeforbreakfast.co \
                 --extra-source=../../plugin/cvesmic/Feed.mjs \
                 --extra-source=../../plugin/cvesmic/Shake.mjs

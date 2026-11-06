@@ -41,7 +41,7 @@ export default class CVEsmicExtension extends Extension {
 
         // Mutter announces each screen cast and remote desktop session that
         // starts from now on, so one already running stays unknown.
-        this._shares = new Set();
+        this._shares = new Map();
         this._shareController = global.backend.get_remote_access_controller();
         this._newShareId = this._shareController?.connect('new-handle', (_controller, share) => this._onNewShare(share));
 
@@ -65,6 +65,8 @@ export default class CVEsmicExtension extends Extension {
         if (this._newShareId)
             this._shareController.disconnect(this._newShareId);
         this._shareController = null;
+        for (const [share, stoppedId] of this._shares)
+            share.disconnect(stoppedId);
         this._shares = null;
         this._stopPollTimer();
         this._request?.cancel();
@@ -88,7 +90,6 @@ export default class CVEsmicExtension extends Extension {
 
     _report(result) {
         this._lastResult = result;
-        console.info('cvesmic:', result);
     }
 
     _feedUrl() {
@@ -200,8 +201,7 @@ export default class CVEsmicExtension extends Extension {
     }
 
     _onNewShare(share) {
-        this._shares.add(share);
-        share.connect('stopped', () => this._shares?.delete(share));
+        this._shares.set(share, share.connect('stopped', () => this._shares.delete(share)));
         if (this._strength) {
             this._endShake();
             this._announce();
