@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1b2140"/>
+      <stop offset="0.55" stop-color="#3a2f5c"/>
+      <stop offset="1" stop-color="#b0566a"/>
+    </linearGradient>
+    <linearGradient id="hills" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a1f3d"/>
+      <stop offset="1" stop-color="#140f22"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <circle cx="1730" cy="440" r="100" fill="#f4b37a" opacity="0.85"/>
+  <path d="M0 820 Q 300 700 620 790 T 1240 760 T 1920 720 V 1080 H 0 Z" fill="url(#hills)" opacity="0.9"/>
+  <path d="M0 900 Q 400 820 820 900 T 1920 860 V 1080 H 0 Z" fill="#0d0a17"/>
+
+  <rect width="1920" height="40" fill="#0d0d16" opacity="0.92"/>
+  <g font-family="DejaVu Sans" font-size="17" fill="#d8d8e8">
+    <circle cx="34" cy="20" r="7" fill="#f4b37a"/>
+    <circle cx="58" cy="20" r="7" fill="#55556a"/>
+    <circle cx="82" cy="20" r="7" fill="#55556a"/>
+    <text x="960" y="26" text-anchor="middle">Fri 09:41</text>
+    <text x="1890" y="26" text-anchor="end">☕ 100%</text>
+  </g>
+
+  <g transform="translate(140 120)">
+    <rect width="1000" height="640" rx="12" fill="#1e1f2b"/>
+    <rect width="1000" height="40" rx="12" fill="#2a2b3a"/>
+    <rect y="28" width="1000" height="12" fill="#2a2b3a"/>
+    <circle cx="24" cy="20" r="7" fill="#ff5f57"/>
+    <circle cx="48" cy="20" r="7" fill="#febc2e"/>
+    <circle cx="72" cy="20" r="7" fill="#28c840"/>
+    <text x="500" y="26" text-anchor="middle" font-family="DejaVu Sans" font-size="16" fill="#9a9ab0">server.js</text>
+    <g font-family="DejaVu Sans Mono" font-size="22">
+      <text x="30" y="90" fill="#6a6a85">// everything is fine</text>
+      <text x="30" y="128"><tspan fill="#c792ea">import</tspan><tspan fill="#d8d8e8"> { serve } </tspan><tspan fill="#c792ea">from</tspan><tspan fill="#c3e88d"> "ancient-http"</tspan><tspan fill="#d8d8e8">;</tspan></text>
+      <text x="30" y="204"><tspan fill="#c792ea">const</tspan><tspan fill="#d8d8e8"> app = </tspan><tspan fill="#82aaff">serve</tspan><tspan fill="#d8d8e8">({</tspan></text>
+      <text x="30" y="242"><tspan fill="#d8d8e8">  port: </tspan><tspan fill="#f78c6c">8080</tspan><tspan fill="#d8d8e8">,</tspan></text>
+      <text x="30" y="280"><tspan fill="#d8d8e8">  auth: </tspan><tspan fill="#f78c6c">false</tspan><tspan fill="#d8d8e8">,</tspan><tspan fill="#6a6a85">  // TODO before launch</tspan></text>
+      <text x="30" y="318"><tspan fill="#d8d8e8">  uploads: </tspan><tspan fill="#c3e88d">"/"</tspan><tspan fill="#d8d8e8">,</tspan></text>
+      <text x="30" y="356" fill="#d8d8e8">});</text>
+      <text x="30" y="432"><tspan fill="#d8d8e8">app.</tspan><tspan fill="#82aaff">listen</tspan><tspan fill="#d8d8e8">(() =&gt; </tspan><tspan fill="#82aaff">log</tspan><tspan fill="#d8d8e8">(</tspan><tspan fill="#c3e88d">"we're live!"</tspan><tspan fill="#d8d8e8">));</tspan></text>
+    </g>
+  </g>
+
+  <g transform="translate(1040 560)">
+    <rect width="760" height="380" rx="12" fill="#101018" opacity="0.97"/>
+    <rect width="760" height="40" rx="12" fill="#22222e"/>
+    <rect y="28" width="760" height="12" fill="#22222e"/>
+    <text x="380" y="26" text-anchor="middle" font-family="DejaVu Sans" font-size="16" fill="#9a9ab0">terminal</text>
+    <g font-family="DejaVu Sans Mono" font-size="21">
+      <text x="24" y="86"><tspan fill="#28c840">~/app</tspan><tspan fill="#d8d8e8"> $ npm install</tspan></text>
+      <text x="24" y="120" fill="#9a9ab0">added 1,312 packages in 4s</text>
+      <text x="24" y="154" fill="#9a9ab0">nobody reads these anyway</text>
+      <text x="24" y="210"><tspan fill="#28c840">~/app</tspan><tspan fill="#d8d8e8"> $ git push --force</tspan></text>
+      <text x="24" y="244" fill="#9a9ab0">Everything up-to-date</text>
+      <text x="24" y="300"><tspan fill="#28c840">~/app</tspan><tspan fill="#d8d8e8"> $ █</tspan></text>
+    </g>
+  </g>
+
+  <g transform="translate(1290 140) rotate(4)">
+    <rect width="300" height="200" fill="#fff07a"/>
+    <g font-family="DejaVu Sans" font-size="26" fill="#3b3520">
+      <text x="24" y="58">patch on Monday</text>
+      <text x="24" y="104">(probably)</text>
+    </g>
+  </g>
+</svg>
