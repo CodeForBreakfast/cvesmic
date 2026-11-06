@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import "Feed.js" as Feed
+import "Feed.mjs" as Feed
 
 // Polls the feed, raises a shake for a new item, and then notifies once for
 // each new item. The shell around it supplies the feed address, says when a
@@ -80,29 +80,18 @@ Scope {
     }
 
     function readResponse(url, xhr) {
-        if (xhr.status === 304) {
-            finishPoll(true, "the feed is unchanged");
-            return;
+        const answer = Feed.readAnswer(memory, url, xhr.status, xhr.responseText, xhr.getResponseHeader("ETag"));
+        if (answer.memory) {
+            memory = answer.memory;
+            remembered(answer.memory);
+            etag = answer.etag;
         }
-        if (xhr.status !== 200) {
-            finishPoll(false, "the feed answered HTTP " + xhr.status);
+        finishPoll(answer.succeeded, answer.result);
+        if (!answer.memory)
             return;
-        }
-        let items;
-        try {
-            items = Feed.parseFeed(xhr.responseText);
-        } catch (e) {
-            finishPoll(false, "the feed is unreadable: " + e.message);
-            return;
-        }
-        const outcome = Feed.assess(memory, url, items);
-        memory = outcome.memory;
-        remembered(outcome.memory);
-        etag = Feed.usableEtag(xhr.getResponseHeader("ETag"));
-        finishPoll(true, "read " + items.length + " items, " + (outcome.shake ? "a new " + outcome.shake + " item" : "none new"));
-        pendingNotices = pendingNotices.concat(outcome.notices);
-        if (outcome.shake)
-            shake(outcome.shake);
+        pendingNotices = pendingNotices.concat(answer.notices);
+        if (answer.shake)
+            shake(answer.shake);
         if (!shaking)
             announce();
     }

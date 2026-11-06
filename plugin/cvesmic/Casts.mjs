@@ -1,7 +1,7 @@
 // Follows niri's event stream to learn which screen casts niri lists. streams
 // holds the listed casts' stream ids, or null until niri has sent its list.
 
-function follow(streams, line) {
+export function follow(streams, line) {
     var event;
     try {
         event = JSON.parse(line);
@@ -28,6 +28,6 @@ function follow(streams, line) {
 }
 
 // A cast list not yet known counts as listing a cast.
-function listed(streams) {
+export function listed(streams) {
     return streams === null || streams.length > 0;
 }

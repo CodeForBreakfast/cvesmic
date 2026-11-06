@@ -4,19 +4,11 @@
 //   nix shell nixpkgs#nodejs nixpkgs#imagemagick nixpkgs#gifski -c node docs/render-shake.mjs
 
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import vm from "node:vm";
-
-const plugin = new URL("../plugin/cvesmic/", import.meta.url);
-const load = (file) => {
-    const context = vm.createContext({});
-    vm.runInContext(readFileSync(new URL(file, plugin), "utf8"), context);
-    return context;
-};
-const Feed = load("Feed.js");
-const Shake = load("Shake.js");
+import * as Feed from "../plugin/cvesmic/Feed.mjs";
+import * as Shake from "../plugin/cvesmic/Shake.mjs";
 
 const screen = { width: 1920, height: 1080 };
 const out = { width: 960, height: 540, captionHeight: 64 };

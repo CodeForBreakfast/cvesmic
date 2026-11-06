@@ -1,10 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import vm from "node:vm";
 
-const Shake = vm.createContext({});
-vm.runInContext(readFileSync(new URL("../plugin/cvesmic/Shake.js", import.meta.url), "utf8"), Shake);
+import * as Shake from "../plugin/cvesmic/Shake.mjs";
+
 const critical = { offsetPx: 50, rotationDeg: 0.6, durationMs: 3000 };
 const screen = { width: 7680, height: 2160 };
 
