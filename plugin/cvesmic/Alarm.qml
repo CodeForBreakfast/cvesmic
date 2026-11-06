@@ -2,23 +2,23 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
-import qs.Services
-import qs.Modules.Plugins
 import "Feed.js" as Feed
 import "Shake.js" as Shake
 
-PluginComponent {
+// Polls the feed and shakes every screen for a new item. The shell around it
+// supplies the feed address, says when the frozen frame could show something
+// private, and keeps the memory of seen items between runs.
+Scope {
     id: root
 
-    readonly property string defaultFeedUrl: "https://pwn.watch/feed.json"
-    readonly property string feedUrl: Feed.usableFeedUrl(pluginData.feedUrl || defaultFeedUrl)
+    required property string requestedFeedUrl
+    readonly property string feedUrl: Feed.usableFeedUrl(requestedFeedUrl || Feed.defaultFeedUrl)
 
-    // A frozen frame can show a secret, so it is never shown over a lock. Other
-    // compositors black out of a capture whatever they black out of a cast. niri
-    // can hide a window from casts but not from captures, so while niri lists a
-    // cast the frame is not shown. NiriService lists no casts anywhere else.
-    readonly property bool locked: SessionService.locked || SessionService.lockedHint || IdleService.isShellLocked || IdleService.isSessionLockSecure
-    readonly property bool unsafeToShow: locked || NiriService.hasCasts
+    required property bool unsafeToShow
+
+    // What the last poll remembered, or null before the first poll.
+    required property var memory
+    signal remembered(var memory)
 
     readonly property int captureGraceMs: 1000
 
@@ -85,8 +85,9 @@ PluginComponent {
             finishPoll(false, "the feed is unreadable: " + e.message);
             return;
         }
-        const outcome = Feed.assess(pluginService.loadPluginState(pluginId, "memory", null), url, items);
-        pluginService.savePluginState(pluginId, "memory", outcome.memory);
+        const outcome = Feed.assess(memory, url, items);
+        memory = outcome.memory;
+        remembered(outcome.memory);
         etag = Feed.usableEtag(xhr.getResponseHeader("ETag"));
         finishPoll(true, "read " + items.length + " items, " + (outcome.shake ? "a new " + outcome.shake + " item" : "none new"));
         if (outcome.shake)

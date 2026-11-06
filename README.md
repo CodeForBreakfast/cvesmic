@@ -10,16 +10,26 @@ It is an alarm bell, not an encyclopaedia. It follows one feed, pwn.watch's "Pat
 
 ## What you need
 
-- A Wayland desktop running [Dux Modular Shell](https://github.com/duxlabs-dev/dux-shell) (`dms`) on Quickshell, on a compositor that lets Quickshell capture the screen.
+- A Wayland compositor that lets [Quickshell](https://quickshell.org/) capture the screen, such as niri, Hyprland or Sway.
+- Quickshell itself. CVEsmic runs as a plugin of [Dux Modular Shell](https://github.com/duxlabs-dev/dux-shell) (`dms`), or on Quickshell alone.
 
 ## Installing
 
-Copy `plugin/cvesmic` into the shell's plugins folder, then switch it on:
+With Dux Modular Shell, copy `plugin/cvesmic` into the shell's plugins folder, then switch it on:
 
 ```sh
 cp -r plugin/cvesmic ~/.config/dms/plugins/cvesmic
 dms ipc call plugins enable cvesmic
 ```
+
+On Quickshell alone, copy the same folder into Quickshell's config folder and start it:
+
+```sh
+cp -r plugin/cvesmic ~/.config/quickshell/cvesmic
+qs -c cvesmic
+```
+
+To start it with your session, have your compositor run `qs -c cvesmic` at startup.
 
 Then wait for the next bad day on the internet. It is rarely a long wait.
 
@@ -30,13 +40,15 @@ Then wait for the next bad day on the internet. It is rarely a long wait.
 - **Severity sets the strength.** It reads the item's tags. An item tagged `critical` shakes hardest, then `high`, `medium` and `low`. An item without one of those tags shakes as `low`.
 - **Your work carries on.** The shake freezes a picture of the screen and shakes the picture. Your apps keep running underneath, and clicks pass through to them.
 - **The picture doesn't linger.** It stays in memory and is dropped when the shake ends.
-- **It never shakes a locked screen**, because the frozen picture could show something private. A lock that starts during a shake stops it.
+- **It never shakes a locked screen**, because the frozen picture could show something private. Under Dux Modular Shell, it skips a shake while the session is locked, and a lock that starts during a shake stops it. On Quickshell alone, the compositor shows only the lock screen while the session is locked, so the picture never appears over a lock.
 - **It respects what you hide from screen casts.** During a cast, the frozen picture hides whatever the compositor hides from the cast, such as a password manager you have blocked from screen sharing. Most compositors hide the same windows from every screen capture, so the picture matches the cast.
-- **niri is the exception.** A window rule with `block-out-from "screencast"` hides a window from casts but not from other screen captures, so the frozen picture would show it. On niri, CVEsmic does not shake while niri lists a screen cast, and a cast that starts during a shake stops it.
+- **niri is the exception.** A window rule with `block-out-from "screencast"` hides a window from casts but not from other screen captures, so the frozen picture would show it. On niri, CVEsmic does not shake while niri lists a screen cast, and a cast that starts during a shake stops it. On Quickshell alone, it also does not shake until it has read niri's list of casts.
 
 ## Settings
 
-The plugin's settings page has one setting, the feed address. Any JSON Feed whose items carry an `id` and severity tags will work. Changing the address counts as a first poll of the new feed.
+There is one setting, the feed address. Any JSON Feed whose items carry an `id` and severity tags will work. Changing the address counts as a first poll of the new feed.
+
+Under Dux Modular Shell, the plugin's settings page holds the address. On Quickshell alone, set `CVESMIC_FEED_URL` in the environment that starts `qs`.
 
 Two IPC calls help when you want to check it works without waiting for a disaster:
 
@@ -45,9 +57,16 @@ dms ipc call cvesmic poll     # poll the feed now
 dms ipc call cvesmic status   # what the last poll or shake did
 ```
 
+On Quickshell alone, the same calls go through `qs`:
+
+```sh
+qs -c cvesmic ipc call cvesmic poll
+qs -c cvesmic ipc call cvesmic status
+```
+
 ## Developing
 
-The feed logic lives in `plugin/cvesmic/Feed.js`, and its tests run with Node:
+The feed logic lives in `plugin/cvesmic/Feed.js`, and the tracking of niri's screen casts lives in `plugin/cvesmic/Casts.js`. Their tests run with Node:
 
 ```sh
 node --test
