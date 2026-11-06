@@ -7,8 +7,7 @@ on:
     types: [completed]
   workflow_dispatch:
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   release:
@@ -19,6 +18,8 @@ jobs:
       (github.event.workflow_run.event == 'push' &&
        github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       GH_TOKEN: ${{ github.token }}
       SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
@@ -26,6 +27,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ env.SHA }}
+          persist-credentials: false
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
 
       - name: Decide whether this merge is a release
@@ -37,33 +39,26 @@ jobs:
             echo "release=false" >> "$GITHUB_OUTPUT"
           elif [ -f "RELEASE-NOTES/$version.md" ]; then
             echo "release=true" >> "$GITHUB_OUTPUT"
-          elif git ls-remote --exit-code --tags origin "v$version" >/dev/null 2>&1; then
+          elif gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v$version" >/dev/null 2>&1; then
             echo "release=true" >> "$GITHUB_OUTPUT"
           else
             echo "::error::version $version has no tag, no release and no RELEASE-NOTES/$version.md"
             exit 1
           fi
 
-      - name: Build the package
+      - name: Build the packages
         if: steps.plan.outputs.release == 'true'
-        env:
-          VERSION: ${{ steps.plan.outputs.version }}
         run: |
-          nix build .#default
-          tar -C result/share --dereference -czf "cvesmic-$VERSION.tar.gz" cvesmic
-          sha256sum "cvesmic-$VERSION.tar.gz" > "cvesmic-$VERSION.tar.gz.sha256"
+          nix build .#release
+          ls -l result/
 
+      # GitHub creates the tag at $SHA if it does not exist, and ignores
+      # --target if it does.
       - name: Tag and announce
         if: steps.plan.outputs.release == 'true'
         env:
           VERSION: ${{ steps.plan.outputs.version }}
         run: |
-          v="v$VERSION"
-          git ls-remote --exit-code --tags origin "$v" >/dev/null 2>&1 || {
-            git tag "$v" "$SHA"
-            git push origin "$v"
-          }
-          gh release create "$v" --verify-tag --title "$v" \
+          gh release create "v$VERSION" --target "$SHA" --title "v$VERSION" \
             --notes-file "RELEASE-NOTES/$VERSION.md" \
-            "cvesmic-$VERSION.tar.gz" \
-            "cvesmic-$VERSION.tar.gz.sha256"
+            result/*
