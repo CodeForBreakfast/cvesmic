@@ -2,7 +2,7 @@
     "uuid": "cvesmic@codeforbreakfast.co",
     "name": "CVEsmic",
     "description": "Shakes the screen when a new item appears in the pwn.watch feed, harder for a more severe one",
-    "shell-version": ["48", "49", "50"],
+    "shell-version": ["48", "49", "50", "51"],
     "url": "https://github.com/CodeForBreakfast/cvesmic",
     "settings-schema": "org.gnome.shell.extensions.cvesmic"
 }
