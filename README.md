@@ -6,12 +6,16 @@
 
 CVEsmic watches the [pwn.watch](https://pwn.watch/) feed. When a new vulnerability lands, your whole desktop gives a little jolt. A low-severity item gets a nudge, and a critical one gets a three-second quake. You feel it before you read about it.
 
-It is an alarm bell, not an encyclopaedia. It follows one feed, pwn.watch's "Patch now" feed by default, which holds the 50 most recently updated incidents. It won't tell you what the item was or whether it affects you. For that, read the item on pwn.watch, or point a proper vulnerability scanner at the software you run.
+When the shaking stops, the news follows, the way people post after an earthquake. A notification names each new item and its severity, and a click on it opens the item on pwn.watch.
+
+It is an alarm bell, not an encyclopaedia. It follows one feed, pwn.watch's "Patch now" feed by default, which holds the 50 most recently updated incidents. It won't tell you whether an item affects you. For that, read the item on pwn.watch, or point a proper vulnerability scanner at the software you run.
 
 ## What you need
 
 - A Wayland compositor that lets [Quickshell](https://quickshell.org/) capture the screen, such as niri, Hyprland or Sway.
 - Quickshell itself. CVEsmic runs as a plugin of [Dux Modular Shell](https://github.com/duxlabs-dev/dux-shell) (`dms`), or on Quickshell alone.
+- On Quickshell alone, `notify-send` from libnotify and a notification daemon, for the notifications. Dux Modular Shell brings its own.
+- `xdg-open`, to open an item's page from its notification.
 
 ## Installing
 
@@ -38,6 +42,7 @@ Then wait for the next bad day on the internet. It is rarely a long wait.
 - **It checks every five minutes.** It sends the feed's entity tag back, so an unchanged feed costs one short answer. After a failure it waits twice as long before the next try, up to an hour.
 - **It doesn't panic on day one.** The first poll of a feed records the items already in it and shakes nothing. After that, any item whose id it has not seen makes the screen shake. Several new items in one poll give one shake, at the strongest severity among them.
 - **Severity sets the strength.** It reads the item's tags. An item tagged `critical` shakes hardest, then `high`, `medium` and `low`. An item without one of those tags shakes as `low`.
+- **The news follows the shake.** When a shake ends, each new item gets its own notification, with its title and severity. A click on the notification opens the item's page. One poll notifies about five items at most, so a flood of new items stays readable. An item whose shake was skipped, because the screen was locked or a cast was listed, still gets its notification.
 - **Your work carries on.** The shake freezes a picture of the screen and shakes the picture. Your apps keep running underneath, and clicks pass through to them.
 - **The picture doesn't linger.** It stays in memory and is dropped when the shake ends.
 - **It never shakes a locked screen**, because the frozen picture could show something private. Under Dux Modular Shell, it skips a shake while the session is locked, and a lock that starts during a shake stops it. On Quickshell alone, the compositor shows only the lock screen while the session is locked, so the picture never appears over a lock.

@@ -16,6 +16,8 @@ PluginComponent {
         // casts anywhere else.
         unsafeToShow: SessionService.locked || SessionService.lockedHint || IdleService.isShellLocked || IdleService.isSessionLockSecure || NiriService.hasCasts
 
+        notifyCommand: ["dms", "notify"]
+
         memory: null
         Component.onCompleted: memory = root.pluginService.loadPluginState(root.pluginId, "memory", null)
         onRemembered: memory => root.pluginService.savePluginState(root.pluginId, "memory", memory)

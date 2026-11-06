@@ -5,16 +5,21 @@ import Quickshell.Wayland
 import "Feed.js" as Feed
 import "Shake.js" as Shake
 
-// Polls the feed and shakes every screen for a new item. The shell around it
-// supplies the feed address, says when the frozen frame could show something
-// private, and keeps the memory of seen items between runs.
+// Polls the feed, shakes every screen for a new item, and then notifies once
+// for each new item. The shell around it supplies the feed address, says when
+// the frozen frame could show something private, names the notifier, and keeps
+// the memory of seen items between runs.
 Scope {
     id: root
 
     required property string requestedFeedUrl
-    readonly property string feedUrl: Feed.usableFeedUrl(requestedFeedUrl || Feed.defaultFeedUrl)
+    readonly property string feedUrl: Feed.usableWebUrl(requestedFeedUrl || Feed.defaultFeedUrl)
 
     required property bool unsafeToShow
+
+    // A command that takes notify-send's flags and, given an action, prints the
+    // chosen action's name when the notification is clicked.
+    required property var notifyCommand
 
     // What the last poll remembered, or null before the first poll.
     required property var memory
@@ -33,8 +38,8 @@ Scope {
     property var pendingNotices: []
 
     // Runs the command after the page address, and opens the page if the
-    // command prints "default", which dms notify does when the notification is
-    // clicked. The feed's text travels as arguments, never as script.
+    // command prints "default", the action a click on the notification chooses.
+    // The feed's text travels as arguments, never as script.
     readonly property string openPageOnClick: 'page=$1; shift; [ "$("$@")" = default ] && exec xdg-open "$page"'
 
     function report(result) {
@@ -108,7 +113,7 @@ Scope {
         const notices = pendingNotices;
         pendingNotices = [];
         for (const notice of notices) {
-            const notify = ["dms", "notify", "-a", "CVEsmic"];
+            const notify = notifyCommand.concat(["-a", "CVEsmic"]);
             const text = ["--", notice.title, "Severity: " + notice.severity];
             if (notice.url)
                 Quickshell.execDetached(["sh", "-c", openPageOnClick, "sh", notice.url].concat(notify, ["-A", "default=Open"], text));
