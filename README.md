@@ -67,6 +67,27 @@ EOF
 
 The effect does not need switching on under System Settings. CVEsmic loads it when it needs it.
 
+On NixOS, the flake offers the Quickshell build, and only that. It does not install the GNOME extension or the KWin effect, and it does not put the plugin in any shell's config for you. The package holds the plugin files in `share/cvesmic` and nothing else, so `nix run` has nothing to start. Pin a release tag in your own flake and take the package or the overlay:
+
+```nix
+inputs.cvesmic.url = "github:CodeForBreakfast/cvesmic/v0.2.0";
+
+cvesmic.packages.${system}.default             # the package
+nixpkgs.overlays = [ cvesmic.overlays.default ];  # pkgs.cvesmic
+```
+
+On Quickshell alone, point `qs` at the package and start it with your session:
+
+```sh
+qs -p ${pkgs.cvesmic}/share/cvesmic
+```
+
+With Dux Modular Shell, link the same folder into its plugins folder, for example with Home Manager, then switch the plugin on as above:
+
+```nix
+xdg.configFile."dms/plugins/cvesmic".source = "${pkgs.cvesmic}/share/cvesmic";
+```
+
 Then wait for the next bad day on the internet. It is rarely a long wait.
 
 ## How it behaves
