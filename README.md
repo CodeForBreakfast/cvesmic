@@ -12,7 +12,7 @@ It is an alarm bell, not an encyclopaedia. It follows one feed, pwn.watch's "Pat
 
 ## What you need
 
-- A Wayland compositor that lets [Quickshell](https://quickshell.org/) capture the screen, such as niri, Hyprland or Sway.
+- A Wayland compositor that lets [Quickshell](https://quickshell.org/) capture the screen, such as niri, Hyprland or Sway. Or KDE Plasma, where CVEsmic's own KWin effect does the shaking.
 - Quickshell itself. CVEsmic runs as a plugin of [Dux Modular Shell](https://github.com/duxlabs-dev/dux-shell) (`dms`), or on Quickshell alone.
 - On Quickshell alone, `notify-send` from libnotify and a notification daemon, for the notifications. Dux Modular Shell brings its own.
 - `xdg-open`, to open an item's page from its notification.
@@ -35,6 +35,20 @@ qs -c cvesmic
 
 To start it with your session, have your compositor run `qs -c cvesmic` at startup.
 
+On KDE Plasma, copy the folder the same way, install the KWin effect as well, and let Plasma start `qs` with your session:
+
+```sh
+kpackagetool6 --type KWin/Effect --install plugin/cvesmic/kwin
+cat > ~/.config/autostart/cvesmic.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=CVEsmic
+Exec=qs -c cvesmic
+EOF
+```
+
+The effect appears as CVEsmic under System Settings, Desktop Effects. CVEsmic loads it when it needs it, so it does not have to be switched on there.
+
 Then wait for the next bad day on the internet. It is rarely a long wait.
 
 ## How it behaves
@@ -47,6 +61,7 @@ Then wait for the next bad day on the internet. It is rarely a long wait.
 - **The picture doesn't linger.** It stays in memory and is dropped when the shake ends.
 - **It never shakes a locked screen**, because the frozen picture could show something private. Under Dux Modular Shell, it skips a shake while the session is locked, and a lock that starts during a shake stops it. On Quickshell alone, the compositor shows only the lock screen while the session is locked, so the picture never appears over a lock.
 - **It respects what you hide from screen casts.** During a cast, the frozen picture hides whatever the compositor hides from the cast, such as a password manager you have blocked from screen sharing. Most compositors hide the same windows from every screen capture, so the picture matches the cast.
+- **KDE Plasma shakes the windows themselves.** KWin gives Quickshell no screen capture, so CVEsmic's KWin effect jolts every window along the same path instead. Nothing is frozen and no picture is kept, so a screen share sees only your windows moving, and a locked screen shows nothing to shake. The windows move but don't tilt.
 - **niri is the exception.** A window rule with `block-out-from "screencast"` hides a window from casts but not from other screen captures, so the frozen picture would show it. On niri, CVEsmic does not shake while niri lists a screen cast, and a cast that starts during a shake stops it. On Quickshell alone, it also does not shake until it has read niri's list of casts.
 
 ## Settings
@@ -71,7 +86,7 @@ qs -c cvesmic ipc call cvesmic status
 
 ## Developing
 
-The feed logic lives in `plugin/cvesmic/Feed.js`, and the tracking of niri's screen casts lives in `plugin/cvesmic/Casts.js`. Their tests run with Node:
+The feed logic lives in `plugin/cvesmic/Feed.js`, the tracking of niri's screen casts in `plugin/cvesmic/Casts.js`, and the KWin effect in `plugin/cvesmic/kwin`. Their tests run with Node:
 
 ```sh
 node --test

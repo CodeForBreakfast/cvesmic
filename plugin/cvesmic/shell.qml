@@ -8,6 +8,10 @@ import "Casts.js" as Casts
 ShellRoot {
     id: root
 
+    // KWin offers Quickshell no way to capture the screen, so on Plasma the
+    // CVEsmic KWin effect jolts the live windows instead of a frozen frame.
+    readonly property bool onKWin: (Quickshell.env("XDG_CURRENT_DESKTOP") || "").split(":").indexOf("KDE") >= 0
+
     // The compositor shows only the lock surfaces while the session is
     // locked, so the frozen frame never appears over a lock. Other
     // compositors black out of a capture whatever they black out of a cast.
@@ -17,6 +21,7 @@ ShellRoot {
     property var niriCasts: null
 
     Alarm {
+        id: watcher
         requestedFeedUrl: Quickshell.env("CVESMIC_FEED_URL") || ""
         unsafeToShow: root.onNiri && Casts.listed(root.niriCasts)
         notifyCommand: ["notify-send"]
@@ -28,6 +33,20 @@ ShellRoot {
             }
         }
         onRemembered: memory => memoryFile.setText(JSON.stringify(memory))
+    }
+
+    Loader {
+        active: !root.onKWin
+        sourceComponent: ScreenShake {
+            alarm: watcher
+        }
+    }
+
+    Loader {
+        active: root.onKWin
+        sourceComponent: KWinShake {
+            alarm: watcher
+        }
     }
 
     FileView {

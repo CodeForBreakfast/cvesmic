@@ -1,0 +1,15 @@
+{
+    "KPackageStructure": "KWin/Effect",
+    "KPlugin": {
+        "Authors": [{ "Name": "Graeme Foster" }],
+        "Category": "Appearance",
+        "Description": "Shakes the screen when CVEsmic reports a new vulnerability",
+        "EnabledByDefault": true,
+        "Icon": "preferences-desktop-effects",
+        "Id": "cvesmic",
+        "License": "MIT",
+        "Name": "CVEsmic",
+        "Version": "0.1.0"
+    },
+    "X-Plasma-API": "javascript"
+}
