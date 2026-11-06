@@ -12,12 +12,20 @@ It is an alarm bell, not an encyclopaedia. It follows one feed, pwn.watch's "Pat
 
 ## What you need
 
-- A Wayland compositor that lets [Quickshell](https://quickshell.org/) capture the screen, such as niri, Hyprland or Sway. Or KDE Plasma, where CVEsmic's own KWin effect does the shaking.
-- Quickshell itself. CVEsmic runs as a plugin of [Dux Modular Shell](https://github.com/duxlabs-dev/dux-shell) (`dms`), or on Quickshell alone.
+- On GNOME, GNOME Shell 48, 49 or 50 under Wayland. CVEsmic is a shell extension there and needs nothing else.
+- Anywhere else, [Quickshell](https://quickshell.org/), on a Wayland compositor that lets it capture the screen, such as niri, Hyprland or Sway, or on KDE Plasma, where CVEsmic's own KWin effect does the shaking. CVEsmic runs as a plugin of [Dux Modular Shell](https://github.com/duxlabs-dev/dux-shell) (`dms`), or on Quickshell alone.
 - On Quickshell alone, `notify-send` from libnotify and a notification daemon, for the notifications. Dux Modular Shell brings its own.
-- `xdg-open`, to open an item's page from its notification.
+- Under Quickshell, `xdg-open`, to open an item's page from its notification.
 
 ## Installing
+
+On GNOME, pack the extension together with the code it shares with the Quickshell build, and install the pack. Then log out and back in, because GNOME Shell reads new extensions at login, and switch it on:
+
+```sh
+gnome-extensions pack gnome/cvesmic@codeforbreakfast.co --extra-source=../../plugin/cvesmic/Feed.mjs --extra-source=../../plugin/cvesmic/Shake.mjs
+gnome-extensions install cvesmic@codeforbreakfast.co.shell-extension.zip
+gnome-extensions enable cvesmic@codeforbreakfast.co
+```
 
 With Dux Modular Shell, copy `plugin/cvesmic` into the shell's plugins folder, then switch it on:
 
@@ -57,10 +65,11 @@ Then wait for the next bad day on the internet. It is rarely a long wait.
 - **It doesn't panic on day one.** The first poll of a feed records the items already in it and shakes nothing. After that, any item whose id it has not seen makes the screen shake. Several new items in one poll give one shake, at the strongest severity among them.
 - **Severity sets the strength.** It reads the item's tags. An item tagged `critical` shakes hardest, then `high`, `medium` and `low`. An item without one of those tags shakes as `low`.
 - **The news follows the shake.** When a shake ends, each new item gets its own notification, with its title and severity. A click on the notification opens the item's page. One poll notifies about five items at most, so a flood of new items stays readable. An item whose shake was skipped, because the screen was locked or a cast was listed, still gets its notification.
-- **Your work carries on.** The shake freezes a picture of the screen and shakes the picture. Your apps keep running underneath, and clicks pass through to them.
-- **The picture doesn't linger.** It stays in memory and is dropped when the shake ends.
-- **It never shakes a locked screen**, because the frozen picture could show something private. Under Dux Modular Shell, it skips a shake while the session is locked, and a lock that starts during a shake stops it. On Quickshell alone, the compositor shows only the lock screen while the session is locked, so the picture never appears over a lock.
-- **It respects what you hide from screen casts.** During a cast, the frozen picture hides whatever the compositor hides from the cast, such as a password manager you have blocked from screen sharing. Most compositors hide the same windows from every screen capture, so the picture matches the cast.
+- **Your work carries on.** On GNOME, the shake moves the desktop itself, and your apps keep running as it moves. Under Quickshell, the shake freezes a picture of the screen and shakes the picture. Your apps keep running underneath, and clicks pass through to them.
+- **The picture doesn't linger.** Under Quickshell, it stays in memory and is dropped when the shake ends. GNOME takes no picture.
+- **It never shakes a locked screen.** On GNOME, the shell switches extensions off while the screen is locked, so a lock also ends a shake in progress. Under Quickshell, the frozen picture could show something private. Under Dux Modular Shell, it skips a shake while the session is locked, and a lock that starts during a shake stops it. On Quickshell alone, the compositor shows only the lock screen while the session is locked, so the picture never appears over a lock.
+- **It stays still while you share your screen on GNOME.** CVEsmic does not shake while a screen cast or a remote desktop session runs, and one that starts during a shake stops it. GNOME tells it only about casts that start after the extension is switched on, so a cast already running at that moment goes unseen.
+- **It respects what you hide from screen casts under Quickshell.** During a cast, the frozen picture hides whatever the compositor hides from the cast, such as a password manager you have blocked from screen sharing. Most compositors hide the same windows from every screen capture, so the picture matches the cast.
 - **KDE Plasma shakes the windows themselves.** KWin gives Quickshell no screen capture, so CVEsmic's KWin effect jolts every window along the same path instead. Nothing is frozen and no picture is kept, so a screen share sees only your windows moving, and a locked screen shows nothing to shake. The windows move but don't tilt.
 - **niri is the exception.** A window rule with `block-out-from "screencast"` hides a window from casts but not from other screen captures, so the frozen picture would show it. On niri, CVEsmic does not shake while niri lists a screen cast, and a cast that starts during a shake stops it. On Quickshell alone, it also does not shake until it has read niri's list of casts.
 
@@ -68,16 +77,30 @@ Then wait for the next bad day on the internet. It is rarely a long wait.
 
 There is one setting, the feed address. Any JSON Feed whose items carry an `id` and severity tags will work. Changing the address counts as a first poll of the new feed.
 
-Under Dux Modular Shell, the plugin's settings page holds the address. On Quickshell alone, set `CVESMIC_FEED_URL` in the environment that starts `qs`.
-
-Two IPC calls help when you want to check it works without waiting for a disaster:
+On GNOME, the extension's settings hold the address. The schema lives with the extension, so tell `gsettings` where to find it:
 
 ```sh
-dms ipc call cvesmic poll     # poll the feed now
-dms ipc call cvesmic status   # what the last poll or shake did
+GSETTINGS_SCHEMA_DIR=~/.local/share/gnome-shell/extensions/cvesmic@codeforbreakfast.co/schemas \
+  gsettings set org.gnome.shell.extensions.cvesmic feed-url https://example.org/feed.json
 ```
 
-On Quickshell alone, the same calls go through `qs`:
+Under Dux Modular Shell, the plugin's settings page holds the address. On Quickshell alone, set `CVESMIC_FEED_URL` in the environment that starts `qs`.
+
+Two calls help when you want to check it works without waiting for a disaster. On GNOME they go over D-Bus:
+
+```sh
+gdbus call --session --dest org.gnome.Shell --object-path /co/codeforbreakfast/CVEsmic --method co.codeforbreakfast.CVEsmic.Poll     # poll the feed now
+gdbus call --session --dest org.gnome.Shell --object-path /co/codeforbreakfast/CVEsmic --method co.codeforbreakfast.CVEsmic.Status   # what the last poll or shake did
+```
+
+Under Dux Modular Shell, the same calls go through `dms`:
+
+```sh
+dms ipc call cvesmic poll
+dms ipc call cvesmic status
+```
+
+On Quickshell alone, through `qs`:
 
 ```sh
 qs -c cvesmic ipc call cvesmic poll
@@ -86,7 +109,7 @@ qs -c cvesmic ipc call cvesmic status
 
 ## Developing
 
-The feed logic lives in `plugin/cvesmic/Feed.js`, the tracking of niri's screen casts in `plugin/cvesmic/Casts.js`, and the KWin effect in `plugin/cvesmic/kwin`. Their tests run with Node:
+The feed logic lives in `plugin/cvesmic/Feed.mjs` and the shake's motion in `plugin/cvesmic/Shake.mjs`. Both the Quickshell build and the GNOME extension in `gnome/` import them. The tracking of niri's screen casts lives in `plugin/cvesmic/Casts.mjs`, and the KWin effect in `plugin/cvesmic/kwin`. Their tests run with Node:
 
 ```sh
 node --test
