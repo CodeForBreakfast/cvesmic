@@ -70,7 +70,7 @@ The effect does not need switching on under System Settings. CVEsmic loads it wh
 On NixOS, the flake offers the Quickshell build, and only that. It does not install the GNOME extension or the KWin effect, and it does not put the plugin in any shell's config for you. The package holds the plugin files in `share/cvesmic` and nothing else, so `nix run` has nothing to start. Pin a release tag in your own flake and take the package or the overlay:
 
 ```nix
-inputs.cvesmic.url = "github:CodeForBreakfast/cvesmic/v0.2.0";
+inputs.cvesmic.url = "github:CodeForBreakfast/cvesmic/v0.2.1";
 
 cvesmic.packages.${system}.default             # the package
 nixpkgs.overlays = [ cvesmic.overlays.default ];  # pkgs.cvesmic
