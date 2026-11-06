@@ -1,7 +1,8 @@
 // Reads the feed and decides when to shake. Everything the feed sends is
 // untrusted, so each value is checked before it is used.
 
-var pollIntervalMs = 5 * 60 * 1000;
+var defaultFeedUrl = "https://pwn.watch/feed.json";
+var pollIntervalMs =5 * 60 * 1000;
 var maxBackoffMs = 60 * 60 * 1000;
 var requestTimeoutMs = 30 * 1000;
 var maxFeedChars = 4 * 1024 * 1024;

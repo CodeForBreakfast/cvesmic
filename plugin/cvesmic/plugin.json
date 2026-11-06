@@ -6,8 +6,8 @@
     "author": "Graeme Foster",
     "type": "daemon",
     "capabilities": ["daemon"],
-    "component": "./CVEsmic.qml",
-    "settings": "./CVEsmicSettings.qml",
+    "component": "./dms/CVEsmic.qml",
+    "settings": "./dms/CVEsmicSettings.qml",
     "icon": "vibration",
     "permissions": ["settings_read", "settings_write", "process", "network"]
 }
