@@ -8,12 +8,12 @@ CVEsmic watches the [pwn.watch](https://pwn.watch/) feed. When a new vulnerabili
 
 When the shaking stops, the news follows, the way people post after an earthquake. A notification names each new item and its severity, and a click on it opens the item on pwn.watch.
 
-It is an alarm bell, not an encyclopaedia. It follows one feed, pwn.watch's "Patch now" feed by default, which holds the 50 most recently updated incidents. It won't tell you whether an item affects you. For that, read the item on pwn.watch, or point a proper vulnerability scanner at the software you run.
+It is an alarm bell, not an encyclopaedia. It follows one feed, pwn.watch's "Patch now" feed by default. It won't tell you whether an item affects you.
 
 ## What you need
 
 - On GNOME, GNOME Shell 48, 49 or 50 under Wayland. CVEsmic is a shell extension there and needs nothing else.
-- Anywhere else, [Quickshell](https://quickshell.org/), on a Wayland compositor that lets it capture the screen, such as niri, Hyprland or Sway, or on KDE Plasma, where CVEsmic's own KWin effect does the shaking. CVEsmic runs as a plugin of [Dux Modular Shell](https://github.com/duxlabs-dev/dux-shell) (`dms`), or on Quickshell alone.
+- Anywhere else, [Quickshell](https://quickshell.org/), on a Wayland compositor that lets it capture the screen, such as niri, Hyprland or Sway, or on KDE Plasma. CVEsmic runs as a plugin of [Dux Modular Shell](https://github.com/duxlabs-dev/dux-shell) (`dms`), or on Quickshell alone.
 - On Quickshell alone, `notify-send` from libnotify and a notification daemon, for the notifications. Dux Modular Shell brings its own.
 - Under Quickshell, `xdg-open`, to open an item's page from its notification.
 
@@ -21,7 +21,7 @@ It is an alarm bell, not an encyclopaedia. It follows one feed, pwn.watch's "Pat
 
 Every release carries one package per desktop and a `SHA256SUMS` file to check them against. The links below fetch the latest release.
 
-On GNOME, install the extension zip, log out and back in, because GNOME Shell reads new extensions at login, and switch it on:
+On GNOME, install the extension zip, log out and back in, and switch it on:
 
 ```sh
 curl -LO https://github.com/CodeForBreakfast/cvesmic/releases/latest/download/cvesmic@codeforbreakfast.co.shell-extension.zip
@@ -49,7 +49,7 @@ qs -c cvesmic
 
 To start it with your session, have your compositor run `qs -c cvesmic` at startup.
 
-On KDE Plasma, you need two files. The Quickshell build watches the feed, and the KWin effect does the shaking. Unpack the Quickshell build into Quickshell's config folder, install the effect, and let Plasma start `qs` with your session:
+On KDE Plasma, unpack the Quickshell build into Quickshell's config folder, install the KWin effect, and let Plasma start `qs` with your session:
 
 ```sh
 curl -LO https://github.com/CodeForBreakfast/cvesmic/releases/latest/download/cvesmic-quickshell.tar.gz
@@ -65,29 +65,26 @@ Exec=qs -c cvesmic
 EOF
 ```
 
-The effect appears as CVEsmic under System Settings, Desktop Effects. CVEsmic loads it when it needs it, so it does not have to be switched on there.
+The effect does not need switching on under System Settings. CVEsmic loads it when it needs it.
 
 Then wait for the next bad day on the internet. It is rarely a long wait.
 
 ## How it behaves
 
-- **It checks every five minutes.** It sends the feed's entity tag back, so an unchanged feed costs one short answer. After a failure it waits twice as long before the next try, up to an hour.
+- **It checks every five minutes.** After a failure it waits twice as long before the next try, up to an hour.
 - **It doesn't panic on day one.** The first poll of a feed records the items already in it and shakes nothing. After that, any item whose id it has not seen makes the screen shake. Several new items in one poll give one shake, at the strongest severity among them.
 - **Severity sets the strength.** It reads the item's tags. An item tagged `critical` shakes hardest, then `high`, `medium` and `low`. An item without one of those tags shakes as `low`.
-- **The news follows the shake.** When a shake ends, each new item gets its own notification, with its title and severity. A click on the notification opens the item's page. One poll notifies about five items at most, so a flood of new items stays readable. An item whose shake was skipped, because the screen was locked or a cast was listed, still gets its notification.
-- **Your work carries on.** On GNOME, the shake moves the desktop itself, and your apps keep running as it moves. Under Quickshell, the shake freezes a picture of the screen and shakes the picture. Your apps keep running underneath, and clicks pass through to them.
-- **The picture doesn't linger.** Under Quickshell, it stays in memory and is dropped when the shake ends. GNOME takes no picture.
-- **It never shakes a locked screen.** On GNOME, the shell switches extensions off while the screen is locked, so a lock also ends a shake in progress. Under Quickshell, the frozen picture could show something private. Under Dux Modular Shell, it skips a shake while the session is locked, and a lock that starts during a shake stops it. On Quickshell alone, the compositor shows only the lock screen while the session is locked, so the picture never appears over a lock.
-- **It stays still while you share your screen on GNOME.** CVEsmic does not shake while a screen cast or a remote desktop session runs, and one that starts during a shake stops it. GNOME tells it only about casts that start after the extension is switched on, so a cast already running at that moment goes unseen.
-- **It respects what you hide from screen casts under Quickshell.** During a cast, the frozen picture hides whatever the compositor hides from the cast, such as a password manager you have blocked from screen sharing. Most compositors hide the same windows from every screen capture, so the picture matches the cast.
-- **KDE Plasma shakes the windows themselves.** KWin gives Quickshell no screen capture, so CVEsmic's KWin effect jolts every window along the same path instead. Nothing is frozen and no picture is kept, so a screen share sees only your windows moving, and a locked screen shows nothing to shake. The windows move but don't tilt.
-- **niri is the exception.** A window rule with `block-out-from "screencast"` hides a window from casts but not from other screen captures, so the frozen picture would show it. On niri, CVEsmic does not shake while niri lists a screen cast, and a cast that starts during a shake stops it. On Quickshell alone, it also does not shake until it has read niri's list of casts.
+- **The news follows the shake.** When a shake ends, each new item gets its own notification, with its title and severity. A click on the notification opens the item's page. One poll notifies about five items at most. An item whose shake was skipped still gets its notification.
+- **Your work carries on.** On GNOME, the shake moves the desktop itself. On KDE Plasma, it moves the windows themselves. Under Quickshell elsewhere, it freezes a picture of the screen and shakes the picture, and clicks pass through to your apps underneath. The picture stays in memory and is dropped when the shake ends.
+- **It never shakes a locked screen.** A lock that starts during a shake stops it.
+- **It stays still while you share your screen on GNOME.** CVEsmic does not shake while a screen cast or a remote desktop session runs, and one that starts during a shake stops it. A cast already running when the extension is switched on goes unseen.
+- **It respects what you hide from screen casts under Quickshell.** During a cast, the frozen picture hides whatever the compositor hides from the cast, such as a password manager you have blocked from screen sharing. On niri, CVEsmic does not shake at all while a cast runs, and a cast that starts during a shake stops it.
 
 ## Settings
 
 There is one setting, the feed address. Any JSON Feed whose items carry an `id` and severity tags will work. Changing the address counts as a first poll of the new feed.
 
-On GNOME, the extension's settings hold the address. The schema lives with the extension, so tell `gsettings` where to find it:
+On GNOME, set it with `gsettings`, pointing it at the extension's schema:
 
 ```sh
 GSETTINGS_SCHEMA_DIR=~/.local/share/gnome-shell/extensions/cvesmic@codeforbreakfast.co/schemas \
