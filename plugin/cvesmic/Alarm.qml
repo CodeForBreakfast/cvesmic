@@ -30,6 +30,13 @@ Scope {
     property var strength: null
     readonly property bool shaking: strength !== null
 
+    property var pendingNotices: []
+
+    // Runs the command after the page address, and opens the page if the
+    // command prints "default", which dms notify does when the notification is
+    // clicked. The feed's text travels as arguments, never as script.
+    readonly property string openPageOnClick: 'page=$1; shift; [ "$("$@")" = default ] && exec xdg-open "$page"'
+
     function report(result) {
         lastResult = result;
         console.info("cvesmic:", result);
@@ -90,8 +97,24 @@ Scope {
         remembered(outcome.memory);
         etag = Feed.usableEtag(xhr.getResponseHeader("ETag"));
         finishPoll(true, "read " + items.length + " items, " + (outcome.shake ? "a new " + outcome.shake + " item" : "none new"));
+        pendingNotices = pendingNotices.concat(outcome.notices);
         if (outcome.shake)
             shake(outcome.shake);
+        if (!shaking)
+            announce();
+    }
+
+    function announce() {
+        const notices = pendingNotices;
+        pendingNotices = [];
+        for (const notice of notices) {
+            const notify = ["dms", "notify", "-a", "CVEsmic"];
+            const text = ["--", notice.title, "Severity: " + notice.severity];
+            if (notice.url)
+                Quickshell.execDetached(["sh", "-c", openPageOnClick, "sh", notice.url].concat(notify, ["-A", "default=Open"], text));
+            else
+                Quickshell.execDetached(notify.concat(text));
+        }
     }
 
     function finishPoll(succeeded, result) {
@@ -118,6 +141,7 @@ Scope {
     function stopShake() {
         shakeEnd.stop();
         strength = null;
+        announce();
     }
 
     onFeedUrlChanged: {

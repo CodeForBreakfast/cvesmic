@@ -14,12 +14,38 @@ const plain = value => JSON.parse(JSON.stringify(value));
 const feedOf = (...items) => JSON.stringify({ version: "https://jsonfeed.org/version/1.1", items });
 const item = (id, ...tags) => ({ id, title: id, tags });
 
-test("parseFeed reads each item's id and strongest severity tag", () => {
-    const items = Feed.parseFeed(feedOf(item("a", "patch", "high"), item("b", "medium", "critical")));
+test("parseFeed reads each item's id, title, page and strongest severity tag", () => {
+    const items = Feed.parseFeed(feedOf(
+        { id: "a", title: "First", url: "https://pwn.watch/i/a", tags: ["patch", "high"] },
+        { id: "https://pwn.watch/i/b", title: "Second", tags: ["medium", "critical"] },
+    ));
     assert.deepEqual(plain(items), [
-        { id: "a", severity: "high" },
-        { id: "b", severity: "critical" },
+        { id: "a", title: "First", url: "https://pwn.watch/i/a", severity: "high" },
+        { id: "https://pwn.watch/i/b", title: "Second", url: "https://pwn.watch/i/b", severity: "critical" },
     ]);
+});
+
+test("parseFeed gives an item no page unless its url or id is a web address", () => {
+    const items = Feed.parseFeed(feedOf(
+        { id: "a", url: "javascript:alert(1)" },
+        { id: "b", url: "https://x/" + "y".repeat(2048) },
+        { id: "file:///etc/passwd" },
+    ));
+    assert.deepEqual(plain(items.map(i => i.url)), ["", "", ""]);
+});
+
+test("parseFeed keeps a title to one plain line that the notification cannot render as markup", () => {
+    const items = Feed.parseFeed(feedOf(
+        { id: "a", title: "  <img src=https://track/me> [high]\n  Bad\tbug  " },
+        { id: "b", title: "x".repeat(500) },
+    ));
+    assert.equal(items[0].title, "img src=https://track/me [high] Bad bug");
+    assert.equal(items[1].title.length, Feed.maxTitleChars);
+});
+
+test("parseFeed names an item by its id when it has no usable title", () => {
+    const items = Feed.parseFeed(feedOf({ id: "a" }, { id: "b", title: 7 }, { id: "c", title: " <> " }));
+    assert.deepEqual(plain(items.map(i => i.title)), ["a", "b", "c"]);
 });
 
 test("parseFeed counts an item with no known severity tag as low", () => {
@@ -58,6 +84,26 @@ test("an unseen id shakes at the strongest severity among the unseen items", () 
     ]);
     assert.equal(outcome.shake, "high");
     assert.deepEqual(plain(outcome.memory.seenIds), ["a", "b", "c"]);
+});
+
+test("each unseen item gets a notice, in feed order", () => {
+    const memory = { feedUrl: "https://feed", seenIds: ["a"] };
+    const b = { id: "b", title: "B", url: "", severity: "medium" };
+    const c = { id: "c", title: "C", url: "", severity: "high" };
+    const outcome = Feed.assess(memory, "https://feed", [{ id: "a", severity: "critical" }, b, c, b]);
+    assert.deepEqual(plain(outcome.notices), [b, c]);
+});
+
+test("the first poll of a feed gives no notices", () => {
+    assert.deepEqual(plain(Feed.assess(null, "https://feed", [{ id: "a", severity: "low" }]).notices), []);
+});
+
+test("one poll gives at most maxNotices notices, so a flood stays readable", () => {
+    const many = Array.from({ length: Feed.maxNotices + 3 }, (_, n) => ({ id: "n" + n, severity: "low" }));
+    const outcome = Feed.assess({ feedUrl: "u", seenIds: [] }, "u", many);
+    assert.equal(outcome.notices.length, Feed.maxNotices);
+    assert.equal(outcome.notices[0].id, "n0");
+    assert.equal(outcome.memory.seenIds.length, many.length);
 });
 
 test("a feed with no unseen ids shakes nothing", () => {
@@ -105,11 +151,11 @@ test("usableEtag accepts only a well-formed entity tag", () => {
         assert.equal(Feed.usableEtag(bad), "", String(bad));
 });
 
-test("usableFeedUrl accepts only http and https addresses", () => {
-    assert.equal(Feed.usableFeedUrl(" https://pwn.watch/feed.json "), "https://pwn.watch/feed.json");
-    assert.equal(Feed.usableFeedUrl("http://localhost:8000/feed.json"), "http://localhost:8000/feed.json");
+test("usableWebUrl accepts only http and https addresses", () => {
+    assert.equal(Feed.usableWebUrl(" https://pwn.watch/feed.json "), "https://pwn.watch/feed.json");
+    assert.equal(Feed.usableWebUrl("http://localhost:8000/feed.json"), "http://localhost:8000/feed.json");
     for (const bad of ["", "file:///etc/passwd", "javascript:1", "ftp://x", undefined])
-        assert.equal(Feed.usableFeedUrl(bad), "", String(bad));
+        assert.equal(Feed.usableWebUrl(bad), "", String(bad));
 });
 
 test("the poll delay doubles on each failure up to a ceiling and resets on success", () => {

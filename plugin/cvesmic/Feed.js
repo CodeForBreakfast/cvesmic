@@ -10,6 +10,8 @@ var maxItems = 500;
 var maxIdChars = 2048;
 var maxSeenIds = 1000;
 var maxEtagChars = 256;
+var maxTitleChars = 200;
+var maxNotices = 5;
 
 var severities = ["low", "medium", "high", "critical"];
 
@@ -35,8 +37,18 @@ function severityOf(tags) {
     return best;
 }
 
-// Returns [{ id, severity }] for each usable item, and throws on text that is
-// not a JSON Feed.
+// The shell renders a notification's text as rich text whenever it holds a
+// tag, and rich text can load remote images, so a title loses its angle
+// brackets.
+function plainTitle(value) {
+    if (typeof value !== "string")
+        return "";
+    return value.replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, maxTitleChars);
+}
+
+// Returns [{ id, title, url, severity }] for each usable item, and throws on
+// text that is not a JSON Feed. url is the item's web page, or "" if it has
+// none.
 function parseFeed(text) {
     var feed = JSON.parse(text);
     if (!feed || typeof feed !== "object" || !Array.isArray(feed.items))
@@ -46,13 +58,19 @@ function parseFeed(text) {
         var entry = feed.items[i];
         if (!entry || typeof entry.id !== "string" || entry.id.length === 0 || entry.id.length > maxIdChars)
             continue;
-        items.push({ id: entry.id, severity: severityOf(entry.tags) });
+        items.push({
+            id: entry.id,
+            title: plainTitle(entry.title) || plainTitle(entry.id),
+            url: usableWebUrl(entry.url) || usableWebUrl(entry.id),
+            severity: severityOf(entry.tags)
+        });
     }
     return items;
 }
 
 // memory is what the last poll returned, or null before the first poll. The
-// first poll of a feed address records its items and shakes nothing.
+// first poll of a feed address records its items and shakes nothing. notices
+// holds the unseen items, in feed order, for one notification each.
 function assess(memory, feedUrl, items) {
     var known = memory && memory.feedUrl === feedUrl && Array.isArray(memory.seenIds);
     var seenIds = known ? memory.seenIds.slice() : [];
@@ -61,17 +79,23 @@ function assess(memory, feedUrl, items) {
         seen[seenIds[i]] = true;
 
     var shake = null;
+    var notices = [];
     for (var j = 0; j < items.length; j++) {
         if (seen[items[j].id])
             continue;
         seen[items[j].id] = true;
         seenIds.push(items[j].id);
-        if (known && (shake === null || rank(items[j].severity) > rank(shake)))
+        if (!known)
+            continue;
+        if (shake === null || rank(items[j].severity) > rank(shake))
             shake = items[j].severity;
+        if (notices.length < maxNotices)
+            notices.push(items[j]);
     }
 
     return {
         shake: shake,
+        notices: notices,
         memory: { feedUrl: feedUrl, seenIds: seenIds.slice(-maxSeenIds) }
     };
 }
@@ -88,11 +112,11 @@ function usableEtag(value) {
     return /^(W\/)?"[\x21\x23-\x7e]*"$/.test(value) ? value : "";
 }
 
-function usableFeedUrl(value) {
+function usableWebUrl(value) {
     if (typeof value !== "string")
         return "";
     var url = value.trim();
-    return /^https?:\/\/[^\s]+$/i.test(url) ? url : "";
+    return url.length <= maxIdChars && /^https?:\/\/[^\s]+$/i.test(url) ? url : "";
 }
 
 function nextDelayMs(currentMs, succeeded) {
