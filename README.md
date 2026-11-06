@@ -10,7 +10,7 @@ It is an alarm bell, not an encyclopaedia. It follows one feed, pwn.watch's "Pat
 
 ## What you need
 
-- A Wayland desktop running [Dux Shell](https://github.com/duxlabs-dev/dux-shell) on Quickshell, on a compositor that lets Quickshell capture the screen.
+- A Wayland desktop running [Dux Modular Shell](https://github.com/duxlabs-dev/dux-shell) (`dms`) on Quickshell, on a compositor that lets Quickshell capture the screen.
 
 ## Installing
 
