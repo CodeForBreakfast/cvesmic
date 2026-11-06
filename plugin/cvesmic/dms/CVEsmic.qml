@@ -7,6 +7,7 @@ PluginComponent {
     id: root
 
     Alarm {
+        id: watcher
         requestedFeedUrl: root.pluginData.feedUrl || ""
 
         // A frozen frame can show a secret, so it is never shown over a lock.
@@ -21,5 +22,9 @@ PluginComponent {
         memory: null
         Component.onCompleted: memory = root.pluginService.loadPluginState(root.pluginId, "memory", null)
         onRemembered: memory => root.pluginService.savePluginState(root.pluginId, "memory", memory)
+    }
+
+    ScreenShake {
+        alarm: watcher
     }
 }
