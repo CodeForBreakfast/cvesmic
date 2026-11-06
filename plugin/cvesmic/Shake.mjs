@@ -1,11 +1,11 @@
 // Where the frozen frame sits at each moment of a shake.
 
-var rest = { x: 0, y: 0, rotation: 0, scale: 1 };
+export const rest = { x: 0, y: 0, rotation: 0, scale: 1 };
 
 // t runs from 0 to 1 over the shake, and seconds is the time since it began.
 // The frame is scaled just enough to cover the screen's edges, so it starts
 // and ends at its true size and position.
-function poseAt(strength, t, seconds, size) {
+export function poseAt(strength, t, seconds, size) {
     if (!(t > 0 && t < 1))
         return rest;
     // Sharp onset, then a long decay, like a quake's main shock.
@@ -24,7 +24,7 @@ function poseAt(strength, t, seconds, size) {
 
 // The smallest scale at which the moved and turned frame still covers every
 // corner of the screen.
-function coveringScale(x, y, rotation, size) {
+export function coveringScale(x, y, rotation, size) {
     var theta = rotation * Math.PI / 180;
     var cos = Math.cos(theta);
     var sin = Math.sin(theta);

@@ -3,7 +3,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import "Casts.js" as Casts
+import "Casts.mjs" as Casts
 
 ShellRoot {
     id: root

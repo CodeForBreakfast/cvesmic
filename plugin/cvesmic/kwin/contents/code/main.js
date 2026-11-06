@@ -4,7 +4,7 @@
 //
 // A scripted effect has no timers and cannot import a file, so the path is a
 // list of keyframes scheduled up front, each a short animation with a delay.
-// The envelope is the one in Shake.js: a sharp onset, then a long decay.
+// The envelope is the one in Shake.mjs: a sharp onset, then a long decay.
 
 var frameMs = 50;
 

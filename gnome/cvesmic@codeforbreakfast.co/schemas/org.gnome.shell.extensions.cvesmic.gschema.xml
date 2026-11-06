@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.cvesmic" path="/org/gnome/shell/extensions/cvesmic/">
+    <key name="feed-url" type="s">
+      <default>"https://pwn.watch/feed.json"</default>
+      <summary>Feed address</summary>
+      <description>The JSON Feed that CVEsmic polls. The address starts with https:// or http://.</description>
+    </key>
+  </schema>
+</schemalist>

@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import "Shake.js" as Shake
+import "Shake.mjs" as Shake
 
 // Shakes a frozen picture of each screen while the alarm is shaking, on a
 // compositor that lets Quickshell capture the screen.
