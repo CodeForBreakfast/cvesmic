@@ -19,34 +19,44 @@ It is an alarm bell, not an encyclopaedia. It follows one feed, pwn.watch's "Pat
 
 ## Installing
 
-On GNOME, pack the extension together with the code it shares with the Quickshell build, and install the pack. Then log out and back in, because GNOME Shell reads new extensions at login, and switch it on:
+Every release carries one package per desktop and a `SHA256SUMS` file to check them against. The links below fetch the latest release.
+
+On GNOME, install the extension zip, log out and back in, because GNOME Shell reads new extensions at login, and switch it on:
 
 ```sh
-gnome-extensions pack gnome/cvesmic@codeforbreakfast.co --extra-source=../../plugin/cvesmic/Feed.mjs --extra-source=../../plugin/cvesmic/Shake.mjs
+curl -LO https://github.com/CodeForBreakfast/cvesmic/releases/latest/download/cvesmic@codeforbreakfast.co.shell-extension.zip
 gnome-extensions install cvesmic@codeforbreakfast.co.shell-extension.zip
 gnome-extensions enable cvesmic@codeforbreakfast.co
 ```
 
-With Dux Modular Shell, copy `plugin/cvesmic` into the shell's plugins folder, then switch it on:
+With Dux Modular Shell, unpack the Quickshell build into the shell's plugins folder, then switch it on:
 
 ```sh
-cp -r plugin/cvesmic ~/.config/dms/plugins/cvesmic
+curl -LO https://github.com/CodeForBreakfast/cvesmic/releases/latest/download/cvesmic-quickshell.tar.gz
+mkdir -p ~/.config/dms/plugins
+tar -xzf cvesmic-quickshell.tar.gz -C ~/.config/dms/plugins
 dms ipc call plugins enable cvesmic
 ```
 
-On Quickshell alone, copy the same folder into Quickshell's config folder and start it:
+On Quickshell alone, unpack the same file into Quickshell's config folder and start it:
 
 ```sh
-cp -r plugin/cvesmic ~/.config/quickshell/cvesmic
+curl -LO https://github.com/CodeForBreakfast/cvesmic/releases/latest/download/cvesmic-quickshell.tar.gz
+mkdir -p ~/.config/quickshell
+tar -xzf cvesmic-quickshell.tar.gz -C ~/.config/quickshell
 qs -c cvesmic
 ```
 
 To start it with your session, have your compositor run `qs -c cvesmic` at startup.
 
-On KDE Plasma, copy the folder the same way, install the KWin effect as well, and let Plasma start `qs` with your session:
+On KDE Plasma, you need two files. The Quickshell build watches the feed, and the KWin effect does the shaking. Unpack the Quickshell build into Quickshell's config folder, install the effect, and let Plasma start `qs` with your session:
 
 ```sh
-kpackagetool6 --type KWin/Effect --install plugin/cvesmic/kwin
+curl -LO https://github.com/CodeForBreakfast/cvesmic/releases/latest/download/cvesmic-quickshell.tar.gz
+curl -LO https://github.com/CodeForBreakfast/cvesmic/releases/latest/download/cvesmic-kwin.tar.gz
+mkdir -p ~/.config/quickshell
+tar -xzf cvesmic-quickshell.tar.gz -C ~/.config/quickshell
+kpackagetool6 --type KWin/Effect --install cvesmic-kwin.tar.gz
 cat > ~/.config/autostart/cvesmic.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
