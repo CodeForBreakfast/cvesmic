@@ -19,6 +19,7 @@ ShellRoot {
     Alarm {
         requestedFeedUrl: Quickshell.env("CVESMIC_FEED_URL") || ""
         unsafeToShow: root.onNiri && Casts.listed(root.niriCasts)
+        notifyCommand: ["notify-send"]
         memory: {
             try {
                 return JSON.parse(memoryFile.text());

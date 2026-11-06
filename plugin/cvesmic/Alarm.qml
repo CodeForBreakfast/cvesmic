@@ -5,16 +5,21 @@ import Quickshell.Wayland
 import "Feed.js" as Feed
 import "Shake.js" as Shake
 
-// Polls the feed and shakes every screen for a new item. The shell around it
-// supplies the feed address, says when the frozen frame could show something
-// private, and keeps the memory of seen items between runs.
+// Polls the feed, shakes every screen for a new item, and then notifies once
+// for each new item. The shell around it supplies the feed address, says when
+// the frozen frame could show something private, names the notifier, and keeps
+// the memory of seen items between runs.
 Scope {
     id: root
 
     required property string requestedFeedUrl
-    readonly property string feedUrl: Feed.usableFeedUrl(requestedFeedUrl || Feed.defaultFeedUrl)
+    readonly property string feedUrl: Feed.usableWebUrl(requestedFeedUrl || Feed.defaultFeedUrl)
 
     required property bool unsafeToShow
+
+    // A command that takes notify-send's flags and, given an action, prints the
+    // chosen action's name when the notification is clicked.
+    required property var notifyCommand
 
     // What the last poll remembered, or null before the first poll.
     required property var memory
@@ -29,6 +34,13 @@ Scope {
 
     property var strength: null
     readonly property bool shaking: strength !== null
+
+    property var pendingNotices: []
+
+    // Runs the command after the page address, and opens the page if the
+    // command prints "default", the action a click on the notification chooses.
+    // The feed's text travels as arguments, never as script.
+    readonly property string openPageOnClick: 'page=$1; shift; [ "$("$@")" = default ] && exec xdg-open "$page"'
 
     function report(result) {
         lastResult = result;
@@ -90,8 +102,24 @@ Scope {
         remembered(outcome.memory);
         etag = Feed.usableEtag(xhr.getResponseHeader("ETag"));
         finishPoll(true, "read " + items.length + " items, " + (outcome.shake ? "a new " + outcome.shake + " item" : "none new"));
+        pendingNotices = pendingNotices.concat(outcome.notices);
         if (outcome.shake)
             shake(outcome.shake);
+        if (!shaking)
+            announce();
+    }
+
+    function announce() {
+        const notices = pendingNotices;
+        pendingNotices = [];
+        for (const notice of notices) {
+            const notify = notifyCommand.concat(["-a", "CVEsmic"]);
+            const text = ["--", notice.title, "Severity: " + notice.severity];
+            if (notice.url)
+                Quickshell.execDetached(["sh", "-c", openPageOnClick, "sh", notice.url].concat(notify, ["-A", "default=Open"], text));
+            else
+                Quickshell.execDetached(notify.concat(text));
+        }
     }
 
     function finishPoll(succeeded, result) {
@@ -118,6 +146,7 @@ Scope {
     function stopShake() {
         shakeEnd.stop();
         strength = null;
+        announce();
     }
 
     onFeedUrlChanged: {
